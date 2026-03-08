@@ -5,7 +5,7 @@ on:
     branches: [ main ]
   pull_request:
     branches: [ main ]
-  workflow_dispatch:
+  workflow_dispatch:      # 允许手动触发
 
 jobs:
   build:
@@ -23,36 +23,37 @@ jobs:
       - name: Set up Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Cache Gradle
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.gradle/caches
-            ~/.gradle/wrapper
-          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-
+      # 确保 gradlew 可执行
       - name: Make gradlew executable
         run: chmod +x gradlew
 
+      # 清理旧构建产物
+      - name: Clean build
+        run: ./gradlew clean
+
+      # 编译 debug APK
       - name: Build Debug APK
         run: ./gradlew assembleDebug
 
+      # 上传 APK 作为构建产物（可在 Actions 页面下载）
       - name: Upload APK as Artifact
         uses: actions/upload-artifact@v4
         with:
           name: app-debug
           path: app/build/outputs/apk/debug/app-debug.apk
           retention-days: 30
+
+      # 发送邮件（密码已硬编码，建议换成 GitHub Secrets）
       - name: Send APK via Email
         uses: dawidd6/action-send-mail@v3
         with:
-          server_address: ${{ secrets.MAIL_SERVER }}
-          server_port: ${{ secrets.MAIL_PORT }}
-          username: ${{ secrets.MAIL_USERNAME }} 
-          password: ${{ secrets.MAIL_PASSWORD }}
+          server_address: smtp.139.com
+          server_port: 587
+          username: lzyzstiq@139.com
+          password: '@15368291z'
           subject: "PING2.0 Debug APK - ${{ github.sha }}"
           to: lzyzstiq@139.com
-          from: ${{ secrets.MAIL_USERNAME }}
+          from: lzyzstiq@139.com
           body: |
             Hi,
 
